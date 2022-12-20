@@ -1,8 +1,17 @@
 import cv2
 import numpy as np
 import imutils
+import glob 
+import os
 
-video='./videos/1.mp4'
+video_id = 2
+video=f'./videos/{video_id}.mp4'
+
+# Remove pre. files
+files = glob.glob('./frames/*')
+for f in files:
+    os.remove(f)
+
 
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
@@ -20,8 +29,11 @@ while(cap.isOpened()):
     
   # Capture frame-by-frame
   ret, frame = cap.read()
-     
+    
   if ret == True:
+    match video_id:
+      case 2 : 
+        frame = frame[270:810, 480:1440, :]
     
     #removing scorecard
     roi = frame
