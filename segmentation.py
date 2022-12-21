@@ -11,7 +11,7 @@ frames.sort(key=lambda f: int(re.sub('\D', '', f)))
 
 # Outpust video creator
 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  
-out_vid = cv2.VideoWriter('./resultt.mp4', fourcc, 30, (512, 288),True)
+out_vid = cv2.VideoWriter('./resultt.mp4', fourcc, 30, (1024, 576),True)
 
 
 # Remove pre. files
@@ -22,6 +22,7 @@ for f in files:
 # Itrate on each frame image
 cnt=0
 for i in range(1,len(frames)):
+    print(i,len(frames))
     # Read frames (Current and prev. frames)
     img = cv2.imread('frames/' + frames[i])
     back = cv2.imread('frames/' + frames[i-1])
@@ -29,7 +30,7 @@ for i in range(1,len(frames)):
     # Make motion frame and remove noises
     diff = cv2.absdiff(img, back)
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray,(5,5),0)
+    gray = cv2.GaussianBlur(gray,(11,11),0)
 
     # Set thresh. and countours
     _ , mask = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
@@ -43,7 +44,7 @@ for i in range(1,len(frames)):
     # plt.imshow(img)
     # plt.show()
 
-    num=3
+    num=5*2
     for i in range(len(contours)):
         x,y,w,h = cv2.boundingRect(contours[i])
         
@@ -51,25 +52,33 @@ for i in range(1,len(frames)):
         denom=max([w,h])
         ratio=numer/denom
 
-        if(x>=num and y>=num):
-            xmin, ymin= x-num, y-num
-            xmax, ymax= x+w+num, y+h+num
-        else:
-            xmin, ymin=x, y
-            xmax, ymax=x+w, y+h
+        # if(x>=num and y>=num):
+        #     xmin, ymin= x-num, y-num
+        #     xmax, ymax= x+w+num, y+h+num
+        # else:
+        xmin, ymin=x+w//2 - num, y+h//2 - num
+        xmax, ymax=x+w//2 + num, y+h//2 + num
 
-        if(ratio>=0.5 and ((w<=20) and (h<=20)) ):    
-            print(cnt,x,y,w,h,ratio)
-            # cv2.imwrite("patch/"+str(cnt)+".png",img[ymin:ymax,xmin:xmax])
+        if(ratio>=0.5 and ((w<=20*2) and (h<=20*2)) ):    
+            # print(cnt,x,y,w,h,ratio)
+            try:
+                cv2.imwrite("patch/"+str(cnt)+".png",img[ymin:ymax,xmin:xmax])
+            except:
+                pass
             cv2.rectangle(img_copy, (xmin,ymin), (xmax,ymax),(255,0,0), 1)
             cnt=cnt+1
 
 
-    cv2.imshow("image",cv2.resize(img_copy,(1024,576)))
+    cv2.imshow("image", img_copy)
+
+    key = cv2.waitKey(0)
+    while key not in [ord('q'), ord('k')]:
+        key = cv2.waitKey(0)
+
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
 
-    out_vid.write(cv2.resize(img_copy,(512,288)))
+    out_vid.write(cv2.resize(img_copy,(1024,576)))
     # out_vid.write(cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR))
 
 out_vid.release()

@@ -4,7 +4,7 @@ import imutils
 import glob 
 import os
 
-video_id = 2
+video_id = 4
 video=f'./videos/{video_id}.mp4'
 
 # Remove pre. files
@@ -34,7 +34,9 @@ while(cap.isOpened()):
     match video_id:
       case 2 : 
         frame = frame[270:810, 480:1440, :]
-    
+      case 4:
+        frame = frame[0:1920, :, :]
+
     #removing scorecard
     roi = frame
     
@@ -42,7 +44,7 @@ while(cap.isOpened()):
     # thresh=600
     # end = roi.shape[1] - thresh
     # roi = roi[:,thresh:end]
-    roi = cv2.resize(roi, (512,288))
+    roi = cv2.resize(roi, (512*2,288*2))
     
     cv2.imshow("image",roi)
     # Press Q on keyboard to  exit
