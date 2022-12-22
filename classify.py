@@ -34,7 +34,7 @@ rfc.fit(x_tr,y_tr)
 
 # Chake accuracy and other methods.
 y_pred = rfc.predict(x_val)
-print(classification_report(y_val,y_pred))
+y_pred_prob = rfc.predict_proba(x_val)
 
 # Save model on .sav file with pickle tool
 filename = './model/classification.sav'
