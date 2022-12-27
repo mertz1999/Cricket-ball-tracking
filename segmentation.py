@@ -5,6 +5,7 @@ import os
 import glob
 import re
 import pickle
+from utils import *
 
 #listing down all the file names
 frames = os.listdir('frames/')
@@ -30,6 +31,8 @@ ROI = cv2.selectROI(img)                        # [int(ROI[1]):int(ROI[1]+ROI[3]
 cnt=0
 # start_frame, stop_frame = 1, len(frames)
 start_frame, stop_frame = 113, 174
+recent_points = []
+
 for i in range(start_frame, stop_frame):
     print(i,len(frames))
     # Read frames (Current and prev. frames)
@@ -48,6 +51,7 @@ for i in range(start_frame, stop_frame):
     contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     img_copy = np.copy(img)
+    img_copy = cv2.rectangle(img_copy, (ROI[0],ROI[1]), (ROI[0]+ROI[2], ROI[1]+ROI[3]), (0,0,0), 1)
     # cv2.drawContours(img_copy, contours, -1, (0,0,255), 3)
 
     # extract condidates box
@@ -83,6 +87,7 @@ for i in range(start_frame, stop_frame):
                 pred = classify.predict_proba(selected_feat)[0][1]
                 if pred > 0.5:
                     cv2.rectangle(img_copy, (xmin,ymin), (xmax,ymax),(0,255,0), 2)
+                    recent_points.append((int((xmin+xmax)/2), int((ymin+ymax)/2)))
                 # else:
                 #     cv2.putText(img_copy, str(round(pred,2)), (xmax,ymax), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,0,0), 1)
         
@@ -97,7 +102,8 @@ for i in range(start_frame, stop_frame):
 
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
-
+    
+    draw_points(img_copy, recent_points) # Draw recent point on this frame
     out_vid.write(img_copy)
     # out_vid.write(cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR))
 
