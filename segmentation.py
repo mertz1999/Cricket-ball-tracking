@@ -12,7 +12,7 @@ frames.sort(key=lambda f: int(re.sub('\D', '', f)))
 
 # Outpust video creator
 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  
-out_vid = cv2.VideoWriter('./resultt.mp4', fourcc, 30, (1024, 576),True)
+out_vid = cv2.VideoWriter('./results/resultt.mp4', fourcc, 30, (1024, 576),True)
 
 # Classify model loading
 classify = pickle.load(open("./model/classification.sav", 'rb'))
@@ -22,9 +22,15 @@ files = glob.glob('./patch/*')
 for f in files:
     os.remove(f)
 
+# Select ROI
+img = cv2.imread('frames/' + frames[0])
+ROI = cv2.selectROI(img)                        # [int(ROI[1]):int(ROI[1]+ROI[3]), int(ROI[0]):int(ROI[0]+ROI[2])]
+
 # Itrate on each frame image
 cnt=0
-for i in range(1,len(frames)):
+# start_frame, stop_frame = 1, len(frames)
+start_frame, stop_frame = 113, 174
+for i in range(start_frame, stop_frame):
     print(i,len(frames))
     # Read frames (Current and prev. frames)
     img = cv2.imread('frames/' + frames[i])
@@ -56,6 +62,10 @@ for i in range(1,len(frames)):
         xmin, ymin=x+w//2 - num, y+h//2 - num
         xmax, ymax=x+w//2 + num, y+h//2 + num
 
+        # Check X,Y is in ROI Selected area
+        if xmin < ROI[0] or ymin < ROI[1] or xmax > (ROI[0]+ROI[2]) or ymax > (ROI[1]+ROI[3]):
+            continue
+
         if(ratio>=0.5 and ((w<=20*2) and (h<=20*2)) ):    
             cnt=cnt+1
             # try:
@@ -68,17 +78,19 @@ for i in range(1,len(frames)):
                 selected_box  = cv2.cvtColor(img[ymin:ymax, xmin:xmax, :], cv2.COLOR_BGR2GRAY)
                 selected_feat = np.array([selected_box]).reshape(1,-1)
 
-                if classify.predict_proba(selected_feat)[0][1] > 0.7:
+                # cv2.rectangle(img_copy, (xmin,ymin), (xmax,ymax),(0,0,255), 2)
+                
+                pred = classify.predict_proba(selected_feat)[0][1]
+                if pred > 0.5:
                     cv2.rectangle(img_copy, (xmin,ymin), (xmax,ymax),(0,255,0), 2)
-                else:
-                    cv2.rectangle(img_copy, (xmin,ymin), (xmax,ymax),(0,0,255), 2)
+                # else:
+                #     cv2.putText(img_copy, str(round(pred,2)), (xmax,ymax), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,0,0), 1)
         
             except:
                 pass
 
 
     # cv2.imshow("image", img_copy)
-
     # key = cv2.waitKey(0)
     # while key not in [ord('q'), ord('k')]:
     #     key = cv2.waitKey(0)
@@ -86,7 +98,7 @@ for i in range(1,len(frames)):
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
 
-    out_vid.write(cv2.resize(img_copy,(1024,576)))
+    out_vid.write(img_copy)
     # out_vid.write(cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR))
 
 out_vid.release()
